@@ -32,7 +32,7 @@
 .menuItem.active {
    /* Selected menu item color */
   text-decoration: none; /* Remove underline */
-  color:blue;
+  color:rgb(115, 0, 255);
 }
 
 .searchBar {

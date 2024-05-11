@@ -28,7 +28,7 @@ function Settings() {
         <input type="text" />
       </div>
 
-      <div className="settingItem">
+      <div className="settingItem2">
         <h2>About</h2>
         <p className="description">A brief description of yourself shown on your profile.</p>
         <input type="text" />
