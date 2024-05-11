@@ -1,0 +1,55 @@
+/* src/components/Sidebar/Sidebar.css */
+
+.Sidebar {
+    position: fixed;
+    top: 100px;
+    left: 0;
+    width: 250px;
+    height: 90%;
+    background: linear-gradient(#ffffff, #DCD6F5);
+    padding: 20px;
+     /* Arrange items vertically */
+    align-items: baseline;
+  }
+  
+  .profile {
+    display: flex;
+    margin-bottom: 20px;
+    align-items: center; /* Center the profile picture and name */
+  }
+  
+  .profilePic {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+  }
+  
+  .profileName {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  .sidebarLink {
+    display: flex;
+    align-items: center;
+    color: #333;
+    text-decoration: none;
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  .sidebarLink:hover {
+    color: gray; /* Gray color on hover */
+  }
+  
+  .sidebarIcon {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+  }
+  
+  .sidebarDivider {
+    margin-top: 250px; /* Pushes the divider and below content to the bottom */
+    border-top: 2px solid #bfbfbf; /* Vertical line */
+    margin-bottom: 20px; /* Add space between divider and below content */
+  }

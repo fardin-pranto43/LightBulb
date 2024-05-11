@@ -1,0 +1,49 @@
+/* src/components/TopBar/TopBar.css */
+
+.TopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* background-color: #f0f0f0; */
+  padding: 10px;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: bold;
+  font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  margin-right: auto; /* Pushes the logo to the left */
+}
+
+.menu {
+  display: flex;
+}
+
+.menuItem {
+  margin-right: 20px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.menuItem:hover {
+  color: gray; /* Gray color on hover */
+}
+
+.menuItem.active {
+   /* Selected menu item color */
+  text-decoration: none; /* Remove underline */
+  color:blue;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  
+}
+
+.searchBar input {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 11px;
+  width: 200px;
+}
