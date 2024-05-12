@@ -13,6 +13,7 @@ function TopBar() {
         <NavLink to="/notifications" className={`menuItem${location.pathname === '/notifications' ? ' active' : ''}`} >Notifications</NavLink>
         <NavLink to="/communities" className={`menuItem${location.pathname === '/communities' ? ' active' : ''}`} >Communities</NavLink>
         <NavLink to="/settings" className={`menuItem${location.pathname === '/settings' ? ' active' : ''}`} >Settings</NavLink>
+        
       </div>
       <div className="searchBar">
         <input type="text" placeholder="Search" />

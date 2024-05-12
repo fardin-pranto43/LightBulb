@@ -1,0 +1,47 @@
+/* CreateBlog.css */
+
+.CreateBlog {
+  padding: 20px;
+  margin-left: 100px;
+}
+.create-blog{
+  padding: 100px;
+  margin-left: 100px !important;
+  resize: none;
+}
+.blogTextArea {
+  width: 100%;
+  height: 200px;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  resize: none;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.draftButton, .postButton {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.draftButton {
+  background-color: #ffc107;
+  color: #fff;
+}
+
+.postButton {
+  background-color: #007bff;
+  color: #fff;
+}
+
+
+.create-blog textarea{
+  resize: none;
+}

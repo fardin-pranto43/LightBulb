@@ -1,0 +1,12 @@
+/* src/pages/Notifications.css */
+
+.MyBlogs {
+    /* Gray background */
+       min-height: 94vh; /* Ensure page takes up full height */
+       padding: 20px;
+     }
+     
+     .MyBlogs h1 {
+       font-size: 24px;
+       color: #333;
+     }  

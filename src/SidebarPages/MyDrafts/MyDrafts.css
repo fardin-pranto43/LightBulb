@@ -1,0 +1,12 @@
+/* src/pages/Notifications.css */
+
+.MyDrafts {
+    /* Gray background */
+       min-height: 94vh; /* Ensure page takes up full height */
+       padding: 20px;
+     }
+     
+     .MyDrafts h1 {
+       font-size: 24px;
+       color: #333;
+     }  

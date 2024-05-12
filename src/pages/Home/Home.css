@@ -1,13 +1,52 @@
 /* src/pages/Home.css */
 
 .Home {
-    padding: 20px;
-  }
-  
-  .Home h1 {
-    font-size: 24px;
-    color: #333;
-  }
-  
-  /* Add more styles as needed */
-  
+  padding: 20px;
+}
+
+.Home h1 {
+  font-size: 24px;
+  color: #333;
+}
+
+.main-content {
+  margin-left: 350px;
+  margin-top: 150px; /* Adjust margin-top to position the main content */
+  /* Add more styles as needed to position the main content */
+}
+
+.post-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  width: 90%;
+}
+
+.post-card h3 {
+  margin-top: 0;
+}
+
+.post-card p {
+  margin-bottom: 0;
+}
+
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.like-button,
+.comment-button {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.like-button:hover,
+.comment-button:hover {
+  background-color: #f0f0f0;
+}

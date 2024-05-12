@@ -17,27 +17,27 @@ function Sidebar() {
         <img src={profilePic} alt="Profile" className="profilePic" />
         <p className="profileName">Fardin Selim Khan</p>
       </div>
-      <Link to="/edit-profile" className="sidebarLink">
+      <Link to="/sidebar-pages/edit-profile" className="sidebarLink">
         <img src={editProfileIcon} alt="Edit Profile" className="sidebarIcon" />
         Edit Profile
       </Link>
 
-      <Link to="/my-blogs" className="sidebarLink">
+      <Link to="/sidebar-pages/my-blogs" className="sidebarLink">
         <img src={myBlogsIcon} alt="My Blogs" className="sidebarIcon" />
         My Blogs
       </Link>
 
-      <Link to="/create-blog" className="sidebarLink">
+      <Link to="/sidebar-pages/create-blog" className="sidebarLink">
         <img src={createBlogIcon} alt="Create New Blog" className="sidebarIcon" />
         Create New Blog
       </Link>
 
-      <Link to="/my-drafts" className="sidebarLink">
+      <Link to="/sidebar-pages/my-drafts" className="sidebarLink">
         <img src={myDraftsIcon} alt="My Drafts" className="sidebarIcon" />
         My Drafts
       </Link>
 
-      <Link to="/create-community" className="sidebarLink">
+      <Link to="/sidebar-pages/create-community" className="sidebarLink">
         <img src={createCommunityIcon} alt="Create New Community" className="sidebarIcon" />
         Create New Community
       </Link>
