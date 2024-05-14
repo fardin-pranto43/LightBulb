@@ -11,17 +11,17 @@
 
 .main-content {
   margin-left: 350px;
-  margin-top: 150px; /* Adjust margin-top to position the main content */
-  /* Add more styles as needed to position the main content */
+  margin-top: 150px;
+  width: calc(100% - 350px);
+  /* Additional styling as needed */
 }
 
 .post-card {
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 20px;
   margin-bottom: 20px;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-  width: 90%;
 }
 
 .post-card h3 {
@@ -34,16 +34,18 @@
 
 .button-container {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   margin-top: 10px;
 }
 
 .like-button,
 .comment-button {
-  padding: 5px 10px;
+  padding: 5px;
   border: 1px solid #ccc;
-  border-radius: 5px;
+  border-radius: 15px;
   cursor: pointer;
+  margin-right: 10px;
+  background-color: rgb(204, 202, 243);
 }
 
 .like-button:hover,

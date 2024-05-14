@@ -1,47 +1,38 @@
-/* CreateBlog.css */
+/* src/SidebarPages/CreateBlog/CreateBlog.css */
 
-.CreateBlog {
-  padding: 20px;
-  margin-left: 100px;
-}
-.create-blog{
-  padding: 100px;
-  margin-left: 100px !important;
-  resize: none;
-}
-.blogTextArea {
-  width: 100%;
-  height: 200px;
-  padding: 10px;
-  margin-bottom: 20px;
-  border: 1px solid #ccc;
-  border-radius: 15px;
-  resize: none;
-}
-
-.buttonContainer {
+.create-blog {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 80px;
 }
 
-.draftButton, .postButton {
+.create-blog input {
+  width: 80%;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.create-blog textarea {
+  width: 80%;
+  margin-bottom: 10px;
+  height: 400px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.create-blog button {
   padding: 10px 20px;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
+  background-color: #007BFF;
+  color: white;
   cursor: pointer;
 }
 
-.draftButton {
-  background-color: #ffc107;
-  color: #fff;
-}
-
-.postButton {
-  background-color: #007bff;
-  color: #fff;
-}
-
-
-.create-blog textarea{
-  resize: none;
+.create-blog button:hover {
+  background-color: #0056b3;
 }

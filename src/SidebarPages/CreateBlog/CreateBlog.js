@@ -1,26 +1,37 @@
 // CreateBlog.js
-
 import React, { useState } from 'react';
 import { useBlog } from './BlogContext';
 import TopBar from '../../components/TopBar/TopBar';
+import './CreateBlog.css';
 
 function CreateBlog() {
-  const [title, setTitle] = useState(''); // Assuming you have a state for title
+  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const { addPost } = useBlog();
 
   const handlePost = () => {
-    // Logic to post the content
-    addPost(title, content); // Assuming title is also being set in the component
-    // Redirect to home page or any other action
+    if (title && content) {
+      addPost({ title, content });
+      setTitle('');
+      setContent('');
+    }
   };
 
   return (
     <div>
-      <TopBar/>
+      <TopBar />
       <div className="create-blog">
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Enter title" />
-        <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Enter content" />
+        <input 
+          type="text" 
+          placeholder="Title" 
+          value={title} 
+          onChange={(e) => setTitle(e.target.value)} 
+        />
+        <textarea 
+          placeholder="Write your blog here..." 
+          value={content} 
+          onChange={(e) => setContent(e.target.value)} 
+        />
         <button onClick={handlePost}>Post</button>
       </div>
     </div>

@@ -1,5 +1,4 @@
 // Home.js
-
 import React from 'react';
 import { useBlog } from '../../SidebarPages/CreateBlog/BlogContext';
 import './Home.css';
@@ -10,21 +9,25 @@ function Home() {
   const { posts } = useBlog();
 
   return (
-    <div>
+    <div className="Home">
       <TopBar />
+      <Sidebar />
       <div className="main-content">
         {posts.map((post, index) => (
           <div key={index} className="post-card">
             <h3>{post.title}</h3>
             <p>{post.content}</p>
             <div className="button-container">
-              <button className="like-button">Like</button>
-              <button className="comment-button">Comments</button>
+              <button className="like-button">
+                <i className="fas fa-thumbs-up"></i> Like
+              </button>
+              <button className="comment-button">
+                <i className="fas fa-comment"></i> Comment
+              </button>
             </div>
           </div>
         ))}
       </div>
-      <Sidebar />
     </div>
   );
 }

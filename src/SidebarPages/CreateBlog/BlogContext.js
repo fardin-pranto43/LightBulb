@@ -1,19 +1,17 @@
 // BlogContext.js
-
 import React, { createContext, useContext, useState } from 'react';
 
 const BlogContext = createContext();
 
-export const useBlog = () => {
+export function useBlog() {
   return useContext(BlogContext);
-};
+}
 
-export const BlogProvider = ({ children }) => {
+export function BlogProvider({ children }) {
   const [posts, setPosts] = useState([]);
 
-  const addPost = (title, content) => {
-    // Update the posts state with the new post object
-    setPosts([...posts, { title, content }]);
+  const addPost = (post) => {
+    setPosts((prevPosts) => [...prevPosts, post]);
   };
 
   return (
@@ -21,4 +19,4 @@ export const BlogProvider = ({ children }) => {
       {children}
     </BlogContext.Provider>
   );
-};
+}
