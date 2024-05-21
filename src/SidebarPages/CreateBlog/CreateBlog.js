@@ -33,6 +33,7 @@ function CreateBlog() {
           onChange={(e) => setContent(e.target.value)} 
         />
         <button onClick={handlePost}>Post</button>
+        
       </div>
     </div>
   );
