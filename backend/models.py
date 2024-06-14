@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, EmailStr, validator
 from typing import List, Optional
 from bson import ObjectId
 
+
 class User(BaseModel):
     uid: Optional[str] = Field(alias="_id")
     name: str
@@ -15,6 +16,15 @@ class User(BaseModel):
         populate_by_name = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
+
+
+class UserCreate(BaseModel):
+    pass
+
+
+class UserDB(BaseModel):
+    id: str = Field(default_factory=lambda: str(ObjectId()), alias="_id")
+
 
 class Community(BaseModel):
     commid: Optional[str] = Field(alias="_id")
