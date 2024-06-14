@@ -16,8 +16,11 @@ import CreateCommunity from './components/Communities/CreateCommunity';
 import Blogs from "./pages/Blogs";
 import ExploreCommunities from "./components/Communities/ExploreCommunities";
 import MyCommunities from "./components/Communities/MyCommunities";
-import CreatePost from "./components/CreateBlog";
-import CreateBlog from "./components/CreateBlog";
+import CreatePost from "./components/Blogs/CreateBlog";
+import CreateBlog from "./components/Blogs/CreateBlog";
+import AllBlogsCards from "./components/Blogs/AllBlogsCards";
+import Home from "./pages/Home";
+import BlogPage from "./pages/BlogPage";
 
 const router = createBrowserRouter([
     {
@@ -27,7 +30,7 @@ const router = createBrowserRouter([
         children: [
             {
                 path: "/",
-                element: <div className="mt-20">Landing page</div>,
+                element: <Home />,
             },
             {
                 path: "/login",
@@ -43,11 +46,11 @@ const router = createBrowserRouter([
                 children: [
                     {
                         path: "/blogs/explore",
-                        element: <div>Explore Blogs</div>,
+                        element: <AllBlogsCards></AllBlogsCards>,
                     },
                     {
                         path: "/blogs/my-blogs",
-                        element: <div>My Blogs</div>,
+                        element: <AllBlogsCards></AllBlogsCards>,
                     }
                 ]
             },
@@ -58,6 +61,10 @@ const router = createBrowserRouter([
             {
                 path: "/notifications",
                 element: <div className="mt-20">Notifications</div>,
+            },
+            {
+                path: "/blog/blogpage",
+                element: <BlogPage></BlogPage>,
             },
             {
                 path: "/communities",
