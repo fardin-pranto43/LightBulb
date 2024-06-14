@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends
 from models import Community
 from database import get_collection
 from exception import BE_Exception as exception

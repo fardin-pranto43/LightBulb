@@ -13,5 +13,9 @@ class BE_Exception:
                                 detail='invaild request')
     NotFound = HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail='request could not be processed as required item was not found')
-    CommunityNotFound = HTTPException(status_code=404, detail="Community not found")
-    UserNotFound = HTTPException(status_code=404, detail="User not found")
+    CommunityNotFound = HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                                    detail="Community not found")
+    UserNotFound = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    UserNotInCommunity = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="User not in community")
