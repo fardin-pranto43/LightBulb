@@ -1,6 +1,6 @@
 import os
 import subprocess
-import re
+import base64
 
 def compile_tikz_to_jpg(tikz_code, output_file):
     latex_content = (
@@ -28,15 +28,15 @@ def compile_tikz_to_jpg(tikz_code, output_file):
         subprocess.check_call(pdflatex_command)
     except subprocess.CalledProcessError as e:
         print(f"Error occurred during pdflatex compilation: {e}")
-        return
+        return False
     
     pdf_file = "temp_tikz.pdf"
-    convert_command = ["magick", "-density", "1000", pdf_file, output_file]
+    convert_command = ["magick", "-density", "300", pdf_file, output_file]
     try:
         subprocess.check_call(convert_command)
     except subprocess.CalledProcessError as e:
         print(f"Error occurred during conversion to JPG: {e}")
-        return
+        return False
     
     cleanup_files = [pdf_file, temp_tex_file, "temp_tikz.aux", "temp_tikz.log"]
     for file in cleanup_files:
@@ -50,21 +50,13 @@ def compile_tikz_to_jpg(tikz_code, output_file):
     except Exception as e:
         print(e)
 
-def extract_tikz_from_tex(tex_file):
-    try:
-        with open(tex_file, 'r') as f:
-            tikz_code = f.read().strip()
-    except FileNotFoundError:
-        print(f"Error: File '{tex_file}' not found.")
-        return
-    except IOError:
-        print(f"Error: Could not read file '{tex_file}'.")
-        return
-    return tikz_code
+    return True
 
-if __name__ == "__main__":
-    tikz_code = extract_tikz_from_tex("example.tex")
-    
-    output_file = "output.jpg"  
-    
-    compile_tikz_to_jpg(tikz_code, output_file)
+def encode_image_to_base64(image_path):
+    with open(image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+    return encoded_string
+
+def decode_base64_to_image(base64_string, output_file):
+    with open(output_file, "wb") as image_file:
+        image_file.write(base64.b64decode(base64_string))
