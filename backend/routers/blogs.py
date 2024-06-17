@@ -25,9 +25,12 @@ def get_reply_collection():
 def get_user_collection():
     return get_collection('users')
 
+def get_community_collection():
+    return get_collection('communities')
+
 
 @router.post("/",response_model=Blog)
-async def create_blog(blog: Blog, collection=Depends(get_blog_collection)):
+async def create_blog(blog: Blog, collection=Depends(get_blog_collection), community_collection=Depends(get_community_collection)):
     blog_dict = blog.dict(by_alias=True)
     
     # check if it got any issues with user id
@@ -40,12 +43,12 @@ async def create_blog(blog: Blog, collection=Depends(get_blog_collection)):
         raise exception.UserNotFound
     
     if blog_dict["commid"] is not None:
-        community = await get_collection("communities").find_one({"_id": blog_dict["commid"]})
+        community = await community_collection.find_one({"_id": blog_dict["commid"]})
         if community is None:
             raise exception.CommunityNotFound
         if blog_dict["uid"] not in community["memberlist"]:
             raise exception.UserNotInCommunity
-        
+
     result = await collection.insert_one(blog_dict)
     blog_dict["_id"] = result.inserted_id
     return blog_dict
@@ -85,19 +88,22 @@ async def update_blog(blog_id: str, blog: Blog, collection=Depends(get_blog_coll
     return Blog(**updated_blog)
 
 @router.delete("/{blog_id}",response_model=Blog)
-async def delete_blog(blog_id: str, collection=Depends(get_blog_collection)):
-    blog = await collection.find_one({"_id": blog_id})
+async def delete_blog(blog_id: str, 
+                      blog_collection=Depends(get_blog_collection), 
+                      like_collection=Depends(get_like_collection), 
+                      comment_collection=Depends(get_comment_collection)):
+    blog = await blog_collection.find_one({"_id": blog_id})
     
     if blog is None:
         raise exception.NotFound
     
     for like in blog["likes"]:
-        await get_collection("likes").delete_one({"_id":like})
+        await like_collection.delete_one({"_id":like})
         
     for comment in blog["comments"]:
-        await get_collection("comments").delete_one({"_id": comment})
+        await comment_collection.delete_one({"_id": comment})
         
-    await collection.delete_one({"_id": blog_id})
+    await blog_collection.delete_one({"_id": blog_id})
     return blog
 
 @router.get("/",response_model=list[Blog])
@@ -107,11 +113,10 @@ async def get_blogs(collection=Depends(get_blog_collection)):
         blogs.append(blog)
     return blogs
 
-@router.get("/allblogs")
-async def get_all_blogs(user_collection=Depends(get_user_collection)):
-    blogs = get_blogs()
+@router.get("/{user_id}/allblogs")
+async def get_all_blogs(user_id: str, blog_collection=Depends(get_blog_collection), user_collection=Depends(get_user_collection)):
     res = []
-    for blog in blogs:
+    async for blog in blog_collection.find():
         user = await user_collection.find_one({"_id": blog["uid"]})
         minires = {
             "blog": blog,
@@ -140,14 +145,21 @@ async def get_user_blogs(user_id: str,
     }
     return res
 
-@router.get("/{community_id}/communities",response_model=list[Blog])
-async def get_community_blogs(community_id: str, collection=Depends(get_blog_collection)):
-    blogs = []
-    async for blog in collection.find({"commid": community_id}):
-        blogs.append(blog)
-    return blogs
+@router.get("/{community_id}/communities")
+async def get_community_blogs(community_id: str, blog_collection=Depends(get_blog_collection), user_collection=Depends(get_user_collection)):
+    res = []
+    async for blog in blog_collection.find({"commid": community_id}):
+        user = await user_collection.find_one({"_id": blog["uid"]})
+        minires = {
+            "blog": blog,
+            "user": user
+        }
+    result = {
+        "blogs" : res
+    }
+    return result
 
-@router.post("/{blog_id}/like",response_model=Like)
+@router.post("/{blog_id}/like")
 async def like_blog(blog_id: str, liker:Like, 
                     blog_collection=Depends(get_blog_collection), 
                     like_collection=Depends(get_like_collection)):
@@ -165,12 +177,12 @@ async def like_blog(blog_id: str, liker:Like,
     for like_str in blog["likes"]:
         like = await like_collection.find_one({"_id": like_str})
         if like["uid"] == liker.uid:
-            raise exception.AlreadyLiked
+            return {"details": "Already liked"}
     
     alreadyLiked = await like_collection.find_one({"blogid": blog_id, "uid": liker.uid})
     print(alreadyLiked)
     if alreadyLiked is not None:
-        raise exception.AlreadyLiked
+        return {"details": "Already liked"}
     
     likes = like_collection
     result = await likes.insert_one(liker.dict(by_alias=True))
@@ -180,7 +192,9 @@ async def like_blog(blog_id: str, liker:Like,
     blog_dict = blog.copy()
     blog_dict.pop("_id", None)
     blog_collection.replace_one({"_id": blog_id}, blog_dict)
-    return liker.dict(by_alias=True)
+    liker_dict = liker.dict(by_alias=True)
+    liker_dict["details"] = "First Like"
+    return liker_dict
 
 @router.delete("/{blog_id}/like",response_model=Like)
 async def unlike_blog(blog_id: str, liker:Like, 
@@ -213,6 +227,21 @@ async def unlike_blog(blog_id: str, liker:Like,
         
     return liker.dict(by_alias=True)
 
+@router.get("/{blog_id}/commentlist")
+async def get_blog_comments(blog_id: str, 
+                            blog_collection = Depends(get_blog_collection),
+                            comments_collection = Depends(get_comment_collection),
+                            user_collection = Depends(get_user_collection)):
+    res = []
+    blog = await blog_collection.find_one({"_id": blog_id})
+    if blog and "comments" in blog:
+        for comment_id in blog["comments"]:
+            comment_info = await get_comment_with_user_info(comment_id, 
+                                                            comments_collection=comments_collection, 
+                                                            user_collection=user_collection)
+            res.append(comment_info)
+    return res
+
 @router.post("/{blog_id}/comment", response_model=Comment)
 async def comment_blog(blog_id: str, commenter: Comment, 
                        blog_collection=Depends(get_blog_collection), 
@@ -237,26 +266,29 @@ async def comment_blog(blog_id: str, commenter: Comment,
 
     return commenter.dict(by_alias=True)
 
-@router.delete("/{blog_id}/comment", response_model=Comment)
-async def uncomment_blog(blog_id: str, commenter: Comment, 
+@router.delete("/{blog_id}/{comment_id}/comment", response_model=Comment)
+async def uncomment_blog(blog_id: str, comment_id: str, commenter: Comment, 
                          blog_collection=Depends(get_blog_collection), 
                          comment_collection=Depends(get_comment_collection)):
     if commenter is None or blog_id != commenter.blogid:
+        print(commenter.blogid + " " +blog_id)
         raise exception.BadRequest
     
     blog = await blog_collection.find_one({"_id": blog_id})
     if blog is None:
         raise exception.NotFound
     
-    to_remove = await comment_collection.find_one({"_id": commenter.cid, "uid": commenter.uid})
+    to_remove = await comment_collection.find_one({"_id": comment_id, "uid": commenter.uid})
     if to_remove is None:
         raise exception.NotFound
     
-    blog["comments"].remove(commenter.cid)
+    print(blog["comments"])
+    print(comment_id)
+    blog["comments"].remove(comment_id)
     blog_dict = blog.copy()
     blog_dict.pop("_id", None)
     await blog_collection.replace_one({"_id": blog_id}, blog_dict)
-    await comment_collection.delete_one({"_id": commenter.cid})
+    await comment_collection.delete_one({"_id": comment_id})
 
     return commenter.dict(by_alias=True)
 
@@ -321,19 +353,41 @@ async def get_likes(like_id:str, collection=Depends(get_like_collection)):
     
     return like
 
-@router.get("/search/{search_query}",response_model=list[Blog])
+@router.get("/search/{search_query}", response_model=list[Blog])
 async def search_blogs(search_query: str, collection=Depends(get_blog_collection)):
     blogs = []
-    async for blog in collection.find({"title": {"$regex": search_query}}):
+    regex = {"$regex": search_query, "$options": "i"}  
+    async for blog in collection.find({"title": regex}):
         blogs.append(blog)
     return blogs
 
-@router.get("/trending",response_model=list[Blog])
-async def get_trending_blogs(collection=Depends(get_blog_collection)):
+@router.get("/{user_id}/trending",response_model=list[Blog])
+async def get_trending_blogs(user_id: str, collection = Depends(get_blog_collection)) :
+    pipeline = [
+        {
+            '$project': {
+                'uid': 1,
+                'title': 1,
+                'commid': 1,
+                'content': 1,
+                'comments': 1,
+                'likes': 1,
+                'created_at': 1,
+                'updated_at': 1,
+                'score': {'$add': [{'$multiply': [{'$size': '$likes'}, 3]}, {'$multiply': [{'$size': '$comments'}, 2]}]}
+            }
+        },
+        {'$sort': {'score': -1}}  # Sort by the computed score in descending order
+    ]
+
+    # Execute the aggregation pipeline
+    cursor = collection.aggregate(pipeline)
+
     blogs = []
-    print(collection.find())
-    async for blog in collection.find().sort(lambda x:len(x["likes"])*3 + 2*len(x["comments"]), -1):
+    async for blog_dict in cursor:
+        blog = Blog(**blog_dict)
         blogs.append(blog)
+    
     return blogs
 
 @router.get("/{blog_id}/details")
