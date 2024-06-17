@@ -9,6 +9,8 @@ router = APIRouter(prefix="/communities", tags=["communities"])
 def get_communities_collection():
     return get_collection('communities')
 
+def get_user_collection():
+    return get_collection('users')
 
 @router.post("/", response_model=Community)
 async def create_community(community: Community, collection=Depends(get_communities_collection)):
@@ -29,11 +31,16 @@ async def read_community(community_id: str, collection=Depends(get_communities_c
 @router.put("/{community_id}", response_model=Community)
 async def update_community(community_id: str, community: Community, collection=Depends(get_communities_collection)):
     community_dict = community.dict(by_alias=True)
+
+    community_dict.pop("_id", None)
+
     result = await collection.replace_one({"_id": community_id}, community_dict)
     if result.modified_count == 0:
         raise exception.CommunityNotFound
-    return community_dict
-
+    
+    updated_community = await collection.find_one({"_id": community_id})
+    
+    return Community(**updated_community)
 
 @router.delete("/{community_id}", response_model=Community)
 async def delete_community(community_id: str, collection=Depends(get_communities_collection)):
@@ -53,37 +60,51 @@ async def read_communities(collection=Depends(get_communities_collection)):
 
 
 @router.put("/{community_id}/join", response_model=Community)
-async def join_community(community_id: str, user_id: str, collection=Depends(get_communities_collection)):
+async def join_community(community_id: str, user_id: str, 
+                         collection=Depends(get_communities_collection), 
+                         user_collection=Depends(get_user_collection)):
     community = await collection.find_one({"_id": community_id})
-    user = await get_collection("users").find_one({"_id": user_id})
-    if user == None:
+    user = await user_collection.find_one({"_id": user_id})
+    
+    if user is None:
         raise exception.UserNotFound
     if community is None:
         raise exception.CommunityNotFound
-    if user_id not in community["memberlist"]:
+    if user_id not in community.get("memberlist", []):
         community["memberlist"].append(user_id)
-        await collection.replace_one({"_id": community_id}, community)
-    return community
+        community_dict = community.copy()
+        community_dict.pop("_id", None)
+        await collection.replace_one({"_id": community_id}, community_dict)
+    else:
+        raise exception.AlreadyInCommunity
+    
+    return Community(**community)
 
 
 @router.put("/{community_id}/leave", response_model=Community)
-async def leave_community(community_id: str, user_id: str, collection=Depends(get_communities_collection)):
-
+async def leave_community(community_id: str, user_id: str, 
+                          collection=Depends(get_communities_collection), 
+                          user_collection=Depends(get_user_collection)):
     community = await collection.find_one({"_id": community_id})
-    user = await get_collection("users").find_one({"_id": user_id})
+    user = await user_collection.find_one({"_id": user_id})
 
-    if user == None:
+    if user is None:
         raise exception.UserNotFound
     if community is None:
         raise exception.CommunityNotFound
-    print(community)
-    print(user)
-    if user_id in community["memberlist"]:
-        community["memberlist"].remove(user_id)
-        await collection.replace_one({"_id": community_id}, community)
-    return community
 
-@router("/recommended", response_model=list[Community])
+    if user_id in community.get("memberlist", []):
+        community["memberlist"].remove(user_id)
+        community_dict = community.copy()
+        community_dict.pop("_id", None)
+        await collection.replace_one({"_id": community_id}, community_dict)
+    else:
+        exception.UserNotInCommunity
+
+    return Community(**community)
+
+
+@router.get("/recommended", response_model=list[Community])
 async def get_recommended_communities(topic: str, collection=Depends(get_communities_collection)):
     communities = []
     async for community in collection.find({"topic": topic}).sort(lambda x: len(x["memberlist"]),-1):

@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import Tiptap from "../TipTap/TipTap";
 import katex from "katex";
 import useAxiosSecure from "../../hooks/useAxiosSecure";
-import axios from "axios";
+import { useLocation } from "react-router-dom";
+import { AuthContext } from "../../Auth/AuthProvider";
+import { useNavigate } from "react-router-dom/dist";
 
 const CreateBlog = () => {
     const [content, setContent] = useState("");
     const [title, setTitle] = useState("");
     const [preview, setPreview] = useState(""); // State to hold rendered HTML preview
-    const [tikzPicture, setTikzPicture] = useState(""); // State to hold TikZ pictures
+    const { userInfo } = useContext(AuthContext);
 
     // Custom Axios instance for secure requests
     const axiosSecure = useAxiosSecure();
@@ -36,33 +38,59 @@ const CreateBlog = () => {
     };
 
     // Function to handle preview button click
-    const handlePreview = () => {
-        setPreview(renderLatex(content)); // Render LaTeX content to HTML and set to preview state
-        
-        const tikzPictureRegex = /\\begin{tikzpicture}(.*?)\\end{tikzpicture}/gs;
+    const handlePreview = (callback) => {
+        const tikzPictureRegex =
+            /\\begin{tikzpicture}[\s\S]*?\\end{tikzpicture}/g;
         const tikzPictures = content.match(tikzPictureRegex);
 
-        setTikzPicture(tikzPictures); // Set TikZ pictures state for reference
-
-        // Assuming there's at least one TikZ picture in the content
         if (tikzPictures && tikzPictures.length > 0) {
-            axiosSecure.post("/blogs/generate", { "tikz_code": tikzPictures[0].toString() })
+            axiosSecure
+                .post("/blogs/generate", {
+                    tikz_code: tikzPictures[0].toString(),
+                })
                 .then((response) => {
                     const base64Image = response.data.base64_image;
-                    console.log(base64Image)
 
-                    // Set the preview state to display the image
-                    setPreview(`<img src="data:image/png;base64,${base64Image}" />`);
-                })
-                .catch((error) => {
-                    console.error('Error fetching image:', error);
-                });
-        }
+                    // Replace the TikZ picture with the image tag decoding the base64
+                    const updatedContent = content.replace(
+                        tikzPictureRegex,
+                        `<img src="data:image/png;base64,${base64Image}" />`
+                    );
+
+                    // Set the preview state to display the updated content
+                    setPreview(renderLatex(updatedContent));
+                callback();
+            })
+            .catch((error) => {
+                console.error("Error fetching image:", error);
+            });
+    } else {
+        setPreview(renderLatex(content));
+        callback();
+    }
     };
 
+    const location = useLocation();
+    const navigate = useNavigate();
+
     const handlePublish = () => {
-        // Publish logic here (not implemented in this example)
-        console.log(content);
+        handlePreview(() => {
+            if (location.pathname === "/blog/create"){
+                const newBlog = {
+                    title: title,
+                    content: preview,
+                    uid: userInfo._id,
+                    created_at: new Date().toLocaleString(),
+                };
+    
+                axiosSecure.post("/blogs", newBlog).then((response) => {
+                    console.log(response.data);
+                    navigate(`/b/${response.data._id}`);
+                }).catch((error) => {
+                    console.error(error);
+                });
+            }
+        });
     };
 
     return (
@@ -94,9 +122,14 @@ const CreateBlog = () => {
             </div>
 
             <p className="font-bold text-xl mt-10">Raw:</p>
-            <p className="max-w-5xl p-5 border-2 border-gray-200 w-full rounded-lg mt-5 mb-20">{content}</p>
+            <p className="max-w-5xl p-5 border-2 border-gray-200 w-full rounded-lg mt-5 mb-20">
+                {content}
+            </p>
             <p className="font-bold text-xl mt-10">Preview:</p>
-            <div className="prose max-w-5xl p-5 border-2 border-gray-200 w-full rounded-lg mt-5 mb-20" dangerouslySetInnerHTML={{ __html: preview }} />
+            <div
+                className="prose max-w-5xl p-5 border-2 border-gray-200 w-full rounded-lg mt-5 mb-20"
+                dangerouslySetInnerHTML={{ __html: preview }}
+            />
         </div>
     );
 };
