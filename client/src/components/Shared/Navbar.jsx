@@ -21,6 +21,7 @@ const Navbar = () => {
             axiosSecure
                 .get("/users/email/?email=" + user?.email)
                 .then((response) => {
+                    console.log(response.data);
                     setUserInfo(response.data);
                 });
         }
@@ -46,16 +47,6 @@ const Navbar = () => {
                     }
                 >
                     Blog
-                </NavLink>
-            </li>
-            <li>
-                <NavLink
-                    to="/notifications"
-                    className={({ isActive }) =>
-                        isActive ? `${active}` : `${inactive}`
-                    }
-                >
-                    Notifications
                 </NavLink>
             </li>
             <li>

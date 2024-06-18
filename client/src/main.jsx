@@ -23,6 +23,7 @@ import Home from "./pages/Home";
 import BlogPage from "./pages/BlogPage";
 import CommunityPage from "./pages/CommunityPage";
 import PostPage from "./pages/PostPage";
+import UserProfiles from "./pages/UserProfiles";
 
 const router = createBrowserRouter([
     {
@@ -61,10 +62,6 @@ const router = createBrowserRouter([
                 element: <CreateBlog></CreateBlog>,
             },
             {
-                path: "/notifications",
-                element: <div className="mt-20">Notifications</div>,
-            },
-            {
                 path: "/b/:id",
                 element: <BlogPage></BlogPage>,
             },
@@ -101,6 +98,10 @@ const router = createBrowserRouter([
             {
                 path: "/profile",
                 element: <PrivateRoute><Profile /></PrivateRoute>,
+            },
+            {
+                path: "/profile/:id",
+                element: <UserProfiles />,
             },
             {
                 path: "/create-community",
