@@ -21,7 +21,6 @@ const Navbar = () => {
             axiosSecure
                 .get("/users/email/?email=" + user?.email)
                 .then((response) => {
-                    console.log(response.data);
                     setUserInfo(response.data);
                 });
         }
@@ -224,6 +223,16 @@ const Navbar = () => {
                     My Blogs
                 </NavLink>
             </li>
+            <li>
+                <NavLink
+                    to="/drafts"
+                    className={({ isActive }) =>
+                        isActive ? `${active}` : `${inactive}`
+                    }
+                >
+                    My Drafts
+                </NavLink>
+            </li>
         </>
     );
 
@@ -240,7 +249,7 @@ const Navbar = () => {
     return (
         <>
             <div className="glass fixed w-full top-0 z-50 custom-shadow nav-glass">
-                <nav className="lg:px-5 px-3 py-2 flex justify-between text-sm items-center lg:text-lg font-extrabold">
+                <nav className="lg:px-5 px-3 py-2  flex justify-between text-sm items-center lg:text-lg font-extrabold">
                     <Link to="/" className="flex items-center gap-2 text-4xl">
                         LightBulb
                     </Link>

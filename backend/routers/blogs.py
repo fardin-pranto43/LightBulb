@@ -324,19 +324,6 @@ async def get_replies(blog_id: str, comment_id: str, collection=Depends(get_repl
         replies.append(reply)
     return replies
 
-@router.delete("/{blog_id}/{comment_id}/reply", response_model=Reply)
-async def delete_reply(blog_id: str, comment_id: str, reply: Reply,
-                        blog_collection=Depends(get_blog_collection),
-                        reply_collection=Depends(get_reply_collection)):
-    if reply is None or blog_id != reply.blogid or comment_id != reply.cid:
-        raise exception.BadRequest
-    
-    to_remove = await reply_collection.find_one({"_id": reply.rid, "uid": reply.uid})
-    if to_remove is None:
-        raise exception.NotFound
-    
-    await reply_collection.delete_one({"_id": reply.rid})
-    return reply.dict(by_alias=True)
 
 @router.get("/{blog_id}/likes",response_model=list[Like])
 async def get_blog_likes(blog_id: str, collection=Depends(get_like_collection)):
@@ -361,8 +348,31 @@ async def search_blogs(search_query: str, collection=Depends(get_blog_collection
         blogs.append(blog)
     return blogs
 
-@router.get("/{user_id}/trending",response_model=list[Blog])
-async def get_trending_blogs(user_id: str, collection = Depends(get_blog_collection)) :
+@router.get("/{comment_id}/replies")
+async def get_replies(comment_id: str, reply_collection=Depends(get_reply_collection),
+                      user_collection=Depends(get_user_collection)):
+    replies = await reply_collection.find({"cid": comment_id}).to_list(None)
+    for reply in replies:
+        user_info = await user_collection.find_one({"_id": reply["uid"]})
+        reply["user_info"] = user_info
+
+    return replies
+
+@router.delete("/{reply_id}/reply")
+async def delete_reply(reply_id: str,
+                        blog_collection=Depends(get_blog_collection),
+                        reply_collection=Depends(get_reply_collection)):
+    
+    to_remove = await reply_collection.find_one({"_id": reply_id})
+    if to_remove is None:
+        raise exception.NotFound
+    
+    await reply_collection.delete_one({"_id": reply_id})
+    return to_remove
+
+@router.get("/{user_id}/trending")
+async def get_trending_blogs(user_id: str, 
+                             collection = Depends(get_blog_collection), user_collection=Depends(get_user_collection)):
     pipeline = [
         {
             '$project': {
@@ -377,20 +387,24 @@ async def get_trending_blogs(user_id: str, collection = Depends(get_blog_collect
                 'score': {'$add': [{'$multiply': [{'$size': '$likes'}, 3]}, {'$multiply': [{'$size': '$comments'}, 2]}]}
             }
         },
-        {'$sort': {'score': -1}}  # Sort by the computed score in descending order
+        {'$sort': {'score': -1}}  
     ]
 
-    # Execute the aggregation pipeline
     cursor = collection.aggregate(pipeline)
 
-    blogs = []
-    async for blog_dict in cursor:
-        if len(blogs) >= 3:
-            break
-        blog = Blog(**blog_dict)
-        blogs.append(blog)
     
-    return blogs
+    res = []
+    async for blog_dict in cursor:
+        if len(res) >= 3:
+            break
+        blog_dict["content"] = blog_dict["content"][:80]
+        blog = Blog(**blog_dict)
+        minires = {
+            "blog": blog,
+            "user": await user_collection.find_one({"_id": blog_dict["uid"]})
+        }
+        res.append(minires)
+    return res
 
 @router.get("/{blog_id}/details")
 async def get_blog_details(blog_id: str, blog_collection=Depends(get_blog_collection),

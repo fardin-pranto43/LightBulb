@@ -12,6 +12,9 @@ def get_communities_collection():
 def get_user_collection():
     return get_collection('users')
 
+def get_blog_collection():
+    return get_collection('blogs')
+
 @router.post("/", response_model=Community)
 async def create_community(community: Community, collection=Depends(get_communities_collection)):
     community_dict = community.dict(by_alias=True)
@@ -20,13 +23,26 @@ async def create_community(community: Community, collection=Depends(get_communit
     return community_dict
 
 
-@router.get("/{community_id}", response_model=Community)
-async def read_community(community_id: str, collection=Depends(get_communities_collection)):
+@router.get("/{community_id}")
+async def read_community(community_id: str, collection=Depends(get_communities_collection), user_collection=Depends(get_user_collection), blog_collection=Depends(get_blog_collection)):
     community = await collection.find_one({"_id": community_id})
     if community is None:
         raise exception.CommunityNotFound
-    return community
+    user_list = []
+    for member in community["memberlist"]:
+        user = await user_collection.find_one({"_id": member})
+        user_list.append(user)
 
+    blog_list = []
+    async for blog in blog_collection.find({"commid": community_id}):
+        user = await user_collection.find_one({"_id": blog["uid"]})
+        minires = {
+            "blog": blog,
+            "user": user
+        }
+        blog_list.append(minires)
+
+    return {"community": community, "users": user_list, "blogs": blog_list}
 
 @router.put("/{community_id}", response_model=Community)
 async def update_community(community_id: str, community: Community, collection=Depends(get_communities_collection)):
@@ -59,7 +75,7 @@ async def read_communities(collection=Depends(get_communities_collection)):
     return communities
 
 
-@router.put("/{community_id}/join", response_model=Community)
+@router.put("/{community_id}/{user_id}/join", response_model=Community)
 async def join_community(community_id: str, user_id: str, 
                          collection=Depends(get_communities_collection), 
                          user_collection=Depends(get_user_collection)):
@@ -117,4 +133,21 @@ async def get_recommended_communities(topic: str, collection = Depends(get_commu
         community = Community(**community_dict)
         communities.append(community)
     
+    return communities
+
+@router.get("/community/{user_id}")
+async def get_user_communities(user_id: str, collection = Depends(get_communities_collection)):
+    communities = []
+    async for community in collection.find({"memberlist": user_id}):
+        print(community)
+        communities.append(community)
+    return communities
+
+@router.get("/ownedcommunities/{user_id}")
+async def get_user_owned_communities(user_id: str, collection = Depends(get_communities_collection)):
+    communities = []
+    async for community in collection.find({"memberlist": user_id}):
+        idx = community["memberlist"].index(user_id)
+        if idx == 0:
+            communities.append(community)
     return communities

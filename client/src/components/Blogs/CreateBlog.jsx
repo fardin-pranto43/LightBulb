@@ -1,11 +1,13 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Tiptap from "../TipTap/TipTap";
 import katex from "katex";
 import useAxiosSecure from "../../hooks/useAxiosSecure";
-import { useLocation } from "react-router-dom";
+import { useFetcher, useLocation } from "react-router-dom";
 import { AuthContext } from "../../Auth/AuthProvider";
 import { useNavigate } from "react-router-dom/dist";
 import { MessageContext } from "../../pages/Root";
+import { data } from "autoprefixer";
+import Loader from "../FunctionalComponents/Loader";
 
 const CreateBlog = () => {
     const [content, setContent] = useState("");
@@ -13,9 +15,34 @@ const CreateBlog = () => {
     const [preview, setPreview] = useState(""); // State to hold rendered HTML preview
     const { userInfo } = useContext(AuthContext);
     const { notifySuccess, notifyError } = useContext(MessageContext);
+    const [loading, setLoading] = useState(false);
 
-    // Custom Axios instance for secure requests
+    const location = useLocation();
+    const navigate = useNavigate();
+
     const axiosSecure = useAxiosSecure();
+
+    useEffect(() => {
+        setLoading(true);
+        const draftID = location.pathname.split("/")[2]; 
+        if (location.pathname === `/drafts/${draftID}/edit`) {
+            
+            axiosSecure.get(`/drafts/${draftID}`).then((response) => {
+                console.log(response.data);
+                setTitle(response.data.title);
+                setContent(response.data.content);
+            }).finally(() => {
+                setLoading(false);
+            });
+        }
+        else {
+            setLoading(false);  
+        }
+    }, []);
+
+    if (loading) {
+        return <Loader />;
+    }
 
     // Function to render LaTeX expressions to HTML using KaTeX
     const renderLatex = (latex) => {
@@ -39,17 +66,18 @@ const CreateBlog = () => {
         return html;
     };
 
-    const handlePreview = (callback) => {
-        const tikzPictureRegex = /\\begin{tikzpicture}[\s\S]*?\\end{tikzpicture}/g;
+    const handlePreview = () => {
+        const tikzPictureRegex =
+            /\\begin{tikzpicture}[\s\S]*?\\end{tikzpicture}/g;
         const tikzPictures = content.match(tikzPictureRegex);
         console.log(tikzPictures);
-    
+
         let updatedContent = content;
         const base64Images = new Array(tikzPictures ? tikzPictures.length : 0);
-    
+
         if (tikzPictures && tikzPictures.length > 0) {
             let processedCount = 0;
-    
+
             tikzPictures.forEach((tikzPicture, index) => {
                 axiosSecure
                     .post("/blogs/generate", {
@@ -59,67 +87,167 @@ const CreateBlog = () => {
                         const base64Image = response.data.base64_image;
                         base64Images[index] = base64Image;
                         processedCount++;
-    
+
                         if (processedCount === tikzPictures.length) {
                             base64Images.forEach((image, i) => {
                                 updatedContent = updatedContent.replace(
                                     `<pre><code>${tikzPictures[i]}</code></pre>`,
-                                    `<img src="data:image/png;base64,${image}" />`
+                                    `<div style="display: flex; justify-content: center;"><img src="data:image/png;base64,${image}" /></div>`
                                 );
                             });
-    
+
                             setPreview(renderLatex(updatedContent));
-                            callback();
                         }
                     })
                     .catch((error) => {
                         console.error("Error fetching image:", error);
                         processedCount++;
-    
+
                         if (processedCount === tikzPictures.length) {
                             base64Images.forEach((image, i) => {
                                 updatedContent = updatedContent.replace(
                                     `<pre><code>${tikzPictures[i]}</code></pre>`,
-                                    `<img src="data:image/png;base64,${image || ''}" />`
+                                    `<div style="display: flex; justify-content: center;"><img src="data:image/png;base64,${
+                                        image || ""
+                                    }" /></div>`
                                 );
                             });
-    
+
                             setPreview(renderLatex(updatedContent));
-                            callback();
                         }
                     });
             });
         } else {
             setPreview(renderLatex(content));
-            callback();
         }
     };
-    
-
-    const location = useLocation();
-    const navigate = useNavigate();
 
     const handlePublish = () => {
-        handlePreview(() => {
-            if (location.pathname === "/blog/create"){
-                const newBlog = {
-                    title: title,
-                    content: preview,
-                    uid: userInfo._id,
-                    created_at: new Date().toLocaleString(),
-                };
-    
-                axiosSecure.post("/blogs", newBlog).then((response) => {
+        handlePreview();
+
+        if (title === "") {
+            notifyError("Title cannot be empty");
+            return;
+        }
+
+        if (preview === "") {
+            notifyError("Content cannot be empty. Please preview your blog first.");
+            return;
+        }
+
+        if (location.pathname === "/blog/create") {
+            const newBlog = {
+                title: title,
+                content: preview,
+                uid: userInfo._id,
+                created_at: new Date().toLocaleString(),
+            };
+
+            axiosSecure
+                .post("/blogs", newBlog)
+                .then((response) => {
                     console.log(response.data);
                     navigate(`/b/${response.data._id}`);
                     notifySuccess("Blog published successfully");
-                }).catch((error) => {
+                })
+                .catch((error) => {
                     console.error(error);
                     notifyError("Failed to publish blog");
                 });
-            }
-        });
+        }
+
+        const communityID = location.pathname.split("/")[2];
+        if (location.pathname === `/community/${communityID}/create`) {
+            const newBlog = {
+                title: title,
+                content: preview,
+                uid: userInfo._id,
+                commid: communityID,
+                created_at: new Date().toLocaleString(),
+            };
+
+            axiosSecure.post("/blogs", newBlog)
+                .then((response) => {
+                    console.log(response.data);
+                    navigate(`/b/${response.data._id}`);
+                    notifySuccess("Blog published successfully");
+                })
+                .catch((error) => {
+                    console.error(error);
+                    notifyError("Failed to publish blog");
+                });
+        }
+
+        const draftID = location.pathname.split("/")[2];
+        if (location.pathname === `/drafts/${draftID}/edit`) {
+            const newBlog = {
+                title: title,
+                content: preview,
+                uid: userInfo._id,
+                created_at: new Date().toLocaleString(),
+            };
+
+            axiosSecure
+                .post("/blogs", newBlog)
+                .then((response) => {
+                    console.log(response.data);
+                    navigate(`/b/${response.data._id}`);
+                    notifySuccess("Blog published successfully");
+                })
+                .catch((error) => {
+                    console.error(error);
+                    notifyError("Failed to publish blog");
+                });
+
+            axiosSecure.delete(`/drafts/${draftID}`).then((response) => {
+                console.log(response.data);
+            });
+        }
     };
+
+    const handleDraft = () => {
+
+        if (preview === "") {
+            notifyError("Content cannot be empty. Please preview your blog first.");
+            return;
+        }
+
+        const newDraft = {
+            title: title,
+            content: preview,
+            uid: userInfo._id,
+        };
+
+        console.log(newDraft);
+        const draftID = location.pathname.split("/")[2];
+        if (location.pathname === `/drafts/${draftID}/edit`) {
+            axiosSecure.delete(`/drafts/${draftID}`).then((response) => {
+                console.log(response.data);
+            });
+        }
+        
+
+        // POST request to save draft
+        fetch("http://localhost:8000/drafts", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newDraft),
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                console.log(data);
+                notifySuccess("Draft saved successfully");
+                navigate(`/drafts/`);
+            })
+            .catch((error) => {
+                console.error(error);
+                notifyError("Failed to save draft");
+            });
+    }
+
+        
 
     return (
         <div className="min-h-dvh mt-32 max-w-5xl mx-auto">
@@ -135,6 +263,13 @@ const CreateBlog = () => {
             </div>
             <Tiptap setContent={setContent} content={content} />
             <div className="mt-10 text-end">
+
+                <button
+                    className="px-3 py-2 bg-primary text-white font-bold w-fit rounded-full mr-5"
+                    onClick={handleDraft}
+                >
+                    Save As Draft
+                </button>
                 <button
                     className="px-3 py-2 bg-accent text-white font-bold w-fit rounded-full mr-5"
                     onClick={handlePreview}
